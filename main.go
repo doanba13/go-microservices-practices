@@ -1,25 +1,52 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/doanba13/handlers"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		d, err := io.ReadAll(r.Body)
+	log := log.New(os.Stdout, "product-api: ", log.LstdFlags)
+	helloHandler := handlers.NewHello(log)
+
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/", helloHandler)
+
+	goodbyeHandler := handlers.NewGoodBye(log)
+	serveMux.Handle("/bye", goodbyeHandler)
+
+	s := &http.Server{
+		Addr:         ":9990",
+		Handler:      serveMux,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+
+	go func() {
+		err := s.ListenAndServe()
+
 		if err != nil {
-			http.Error(w, "Oooopsie", http.StatusBadRequest)
+			log.Fatal(err)
 		}
-		log.Printf("Method %s\n Data %s\n", r.Method, d)
-		fmt.Fprintf(w, "Hello %s", d)
-	})
+	}()
 
-	http.HandleFunc("/goodbye", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Good bye!!!")
-	})
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+	signal.Notify(signalChan, os.Kill)
 
-	http.ListenAndServe(":9990", nil)
+	sig := <-signalChan
+	log.Println("Recieved terminal, grateful shutdown in 30s", sig)
+
+	timeOutContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	defer cancel()
+
+	s.Shutdown(timeOutContext)
 }
