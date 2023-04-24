@@ -18,8 +18,8 @@ func main() {
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/", helloHandler)
 
-	goodbyeHandler := handlers.NewGoodBye(log)
-	serveMux.Handle("/bye", goodbyeHandler)
+	productHandler := handlers.NewProducts(log)
+	serveMux.Handle("/product", productHandler)
 
 	s := &http.Server{
 		Addr:         ":9990",
