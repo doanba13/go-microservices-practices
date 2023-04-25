@@ -19,7 +19,7 @@ func main() {
 	serveMux.Handle("/", helloHandler)
 
 	productHandler := handlers.NewProducts(log)
-	serveMux.Handle("/product", productHandler)
+	serveMux.Handle("/product/", productHandler)
 
 	s := &http.Server{
 		Addr:         ":9990",
