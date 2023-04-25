@@ -9,21 +9,30 @@ import (
 	"time"
 
 	"github.com/doanba13/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 	log := log.New(os.Stdout, "product-api: ", log.LstdFlags)
-	helloHandler := handlers.NewHello(log)
 
-	serveMux := http.NewServeMux()
-	serveMux.Handle("/", helloHandler)
+	newMux := mux.NewRouter()
+	getMux := newMux.Methods(http.MethodGet).Subrouter()
+	putMux := newMux.Methods(http.MethodPut).Subrouter()
+	postMux := newMux.Methods(http.MethodPost).Subrouter()
 
 	productHandler := handlers.NewProducts(log)
-	serveMux.Handle("/product/", productHandler)
+
+	getMux.HandleFunc("/product", productHandler.GetProducts)
+
+	putMux.HandleFunc("/product/{id:[0-9]+}", productHandler.UpdateProduct)
+	putMux.Use(productHandler.MiddlewareValidateFunc)
+
+	postMux.HandleFunc("/product", productHandler.AddProducts)
+	postMux.Use(productHandler.MiddlewareValidateFunc)
 
 	s := &http.Server{
 		Addr:         ":9990",
-		Handler:      serveMux,
+		Handler:      newMux,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,

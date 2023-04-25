@@ -59,18 +59,6 @@ func GetProductById(id int) *Product {
 	return nil
 }
 
-func CreateProduct(w http.ResponseWriter, r io.Reader) *Product {
-	pd := &Product{}
-	err := pd.FromJSON(r)
-
-	if err != nil {
-		http.Error(w, "Cannot decode json", http.StatusBadRequest)
-		return nil
-	}
-
-	return pd
-}
-
 var productList = Products{
 	{
 		ID:          1,
