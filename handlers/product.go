@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -71,6 +72,12 @@ func (p *Products) MiddlewareValidateFunc(next http.Handler) http.Handler {
 
 		if err != nil {
 			http.Error(w, "Cannot decode json", http.StatusBadRequest)
+			return
+		}
+		validateErr := pd.Validate()
+
+		if validateErr != nil {
+			http.Error(w, fmt.Sprint("Validate json error: ", validateErr), http.StatusBadRequest)
 			return
 		}
 
